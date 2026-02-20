@@ -49,7 +49,7 @@
 
   .statsRow{display:grid;grid-template-columns:1fr;gap:10px;margin:10px 0 14px}
   @media (min-width:900px){
-    .statsRow{grid-template-columns:1fr 1fr 1fr 1fr}
+    .statsRow{grid-template-columns:repeat(auto-fit, minmax(220px, 1fr))}
   }
   .statCard{
     background:var(--panel); border:1px solid var(--line);
@@ -157,6 +157,16 @@
     </div>
 
     <div class="statsRow">
+
+      <div class="statCard">
+        <div class="label">Team / Warband Name</div>
+        <div class="rowInline" style="margin-top:10px">
+          <input id="warbandName" type="text"
+                 placeholder="e.g. The Ashen Corsairs"
+                 style="width:100%;min-width:0;background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text);font-weight:900" />
+        </div>
+        <div class="notice">Saved in this browser and included in team export.</div>
+      </div>
       <div class="statCard">
         <div class="label">Fighters</div>
         <div class="value" id="fighterCount">0</div>
@@ -185,14 +195,6 @@
         </div>
         <div class="notice">Presets are saved in this browser (localStorage).</div>
       </div>
-
-      <div class="statCard">
-        <div class="label">Export Option</div>
-        <div class="rowInline" style="margin-top:10px">
-          <label class="toggle"><input id="stripPortraits" type="checkbox" checked /> Strip portraits</label>
-        </div>
-        <div class="notice">Recommended if portraits are base64 in fighter JSON.</div>
-      </div>
     </div>
 
     <div id="status" class="notice"></div>
@@ -211,7 +213,9 @@
   const fighterCountEl = el("fighterCount");
   const limitInput = el("limitInput");
   const limitNotice = el("limitNotice");
-  const stripPortraitsEl = el("stripPortraits");
+  const warbandNameEl = el("warbandName");
+
+  const WARBAND_KEY = "dr_mortalis_teambuilder_warband_name_v1";
 
   const fileInput = el("fileInput");
   const teamInput = el("teamInput");
@@ -242,6 +246,17 @@
       .replaceAll(">","&gt;")
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
+  }
+
+
+  // ---- Warband Name ----
+  function loadWarbandName() {
+    try { return localStorage.getItem(WARBAND_KEY) || ""; }
+    catch { return ""; }
+  }
+  function saveWarbandName(name) {
+    try { localStorage.setItem(WARBAND_KEY, String(name || "")); }
+    catch {}
   }
 
   // ---- Presets ----
@@ -497,12 +512,12 @@
     render();
   }
 
-  function exportTeam() {
-    const stripPortraits = !!stripPortraitsEl.checked;
+  function exportTeam() {    const stripPortraits = true;
     const exported = {
       app: "Mortalis / Dark Realms Team Builder",
       version: 1,
       savedAt: new Date().toISOString(),
+      warbandName: (warbandNameEl?.value || "").trim(),
       limit: safeNumber(limitInput.value),
       presets: loadPresets(),
       fighters: team.map(entry => {
@@ -529,6 +544,12 @@
       if (!obj || typeof obj !== "object" || !Array.isArray(obj.fighters)) {
         setStatus("Not a valid team file (missing fighters array).", true);
         return;
+      }
+
+      // Restore warband name if present
+      if (typeof obj.warbandName === "string" && warbandNameEl) {
+        warbandNameEl.value = obj.warbandName;
+        saveWarbandName(obj.warbandName);
       }
 
       // Restore presets if present (optional)
@@ -625,6 +646,13 @@
 
   // Init
   refreshPresetSelect();
+
+  // Warband name persistence
+  if (warbandNameEl) {
+    warbandNameEl.value = loadWarbandName();
+    warbandNameEl.addEventListener("input", () => saveWarbandName(warbandNameEl.value));
+  }
+
   render();
 })();
 </script>
