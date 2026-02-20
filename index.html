@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mortalis / Dark Realms — Team Builder</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#111823; --panel2:#0f1620;
+    --text:#e9f0ff; --muted:#a7b2c6;
+
+    /* NEW border color */
+    --line:#00736b;
+
+    --accent:#42d3ff; --danger:#ff5c73; --ok:#66ffb3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:linear-gradient(180deg,#070a0f,#0b0f14);color:var(--text)}
+
+  /* NEW: match builders */
+  .wrap{max-width:960px;margin:0 auto;padding:18px}
+
+  .topbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .title{display:flex;flex-direction:column;gap:2px}
+  .title h1{margin:0;font-size:18px;letter-spacing:.3px}
+  .title .sub{color:var(--muted);font-size:12px}
+
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button,.btn{
+    background:var(--panel); color:var(--text);
+    border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; cursor:pointer; font-weight:700;
+  }
+  button:hover{filter:brightness(1.06)}
+  button.danger{border-color:var(--line)}
+  button.danger:hover{filter:brightness(1.06)}
+  button.accent{border-color:var(--line)}
+  button.accent:hover{filter:brightness(1.06)}
+  input[type="file"]{display:none}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 12px;border-radius:999px;border:1px solid var(--line);
+    background:rgba(17,24,35,.7);
+    color:var(--text); font-weight:700;
+    cursor:pointer;
+  }
+  .pill:hover{filter:brightness(1.06)}
+
+  .statsRow{display:grid;grid-template-columns:1fr;gap:10px;margin:10px 0 14px}
+  @media (min-width:900px){
+    .statsRow{grid-template-columns:1fr 1fr 1fr 1fr}
+  }
+  .statCard{
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:12px 14px; min-height:92px;
+  }
+  .statCard .label{color:var(--muted);font-size:12px}
+  .statCard .value{font-size:22px;font-weight:900;margin-top:4px}
+  .statCard .notice{color:var(--muted);font-size:12px;line-height:1.35;margin-top:6px}
+
+  .rowInline{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .field, select{
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:8px 10px;
+    color:var(--text);
+    font-weight:800;
+    outline:none;
+  }
+  select option{color:#0b0f14}
+  .field{width:110px}
+  .smallField{width:90px}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:10px}
+  @media (min-width:900px){
+    .grid{grid-template-columns:1fr 1fr}
+  }
+
+  .fighter{
+    background:rgba(17,24,35,.8);
+    border:1px solid var(--line);
+    border-radius:16px; overflow:hidden;
+  }
+  .fighterHead{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;padding:12px 14px;background:rgba(15,22,32,.9)
+  }
+  .fighterHead .left{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .fighterHead .name{font-weight:900;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px}
+  .fighterHead .meta{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px}
+  .fighterHead .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  .costTag{
+    font-weight:900;
+    border:1px solid var(--line);
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(0,115,107,.12);
+  }
+
+  details{border-top:1px solid var(--line)}
+  details summary{list-style:none;cursor:pointer;padding:10px 14px;color:var(--muted);user-select:none}
+  details summary::-webkit-details-marker{display:none}
+
+  .body{padding:12px 14px;display:grid;gap:10px}
+  .section{
+    background:rgba(17,24,35,.55);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px 12px
+  }
+  .section h3{margin:0 0 6px;font-size:12px;letter-spacing:.4px;color:var(--muted);text-transform:uppercase}
+
+  .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed rgba(0,115,107,.55)}
+  .row:last-child{border-bottom:none}
+  .row .l{min-width:0}
+  .row .l b{font-weight:900}
+  .row .l .small{color:var(--muted);font-size:12px;margin-top:2px;line-height:1.25}
+  .row .r{white-space:nowrap;font-weight:900}
+
+  .kvs{display:flex;gap:10px;flex-wrap:wrap}
+  .kv{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 10px;
+    background:rgba(17,24,35,.35)
+  }
+  .kv .k{color:var(--muted);font-size:11px}
+  .kv .v{font-size:14px;font-weight:900;margin-top:2px}
+
+  .muted{color:var(--muted)}
+  .notice{color:var(--muted);font-size:12px;line-height:1.35;margin-top:6px}
+  .error{color:var(--danger);font-weight:800}
+  .ok{color:var(--ok);font-weight:900}
+
+  .toggle{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+  .toggle input{transform:scale(1.1)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>Mortalis / Dark Realms — Team Builder</h1>
+        <div class="sub">Load fighter JSONs, sum points, manage roster, and use customizable limit presets.</div>
+      </div>
+      <div class="controls">
+        <label class="pill" for="fileInput">Load Fighter JSON(s)</label>
+        <input id="fileInput" type="file" multiple accept=".json,application/json" />
+        <button class="accent" id="exportBtn">Export Team (.json)</button>
+        <label class="pill" for="teamInput">Import Team (.json)</label>
+        <input id="teamInput" type="file" accept=".json,application/json" />
+        <button class="danger" id="clearBtn">Clear Team</button>
+      </div>
+    </div>
+
+    <div class="statsRow">
+      <div class="statCard">
+        <div class="label">Fighters</div>
+        <div class="value" id="fighterCount">0</div>
+        <div class="notice">Batch-load multiple files at once.</div>
+      </div>
+
+      <div class="statCard">
+        <div class="label">Team Total Points</div>
+        <div class="value" id="teamTotal">0</div>
+        <div class="notice" id="limitNotice"></div>
+      </div>
+
+      <div class="statCard">
+        <div class="label">Points Limit</div>
+        <div class="rowInline">
+          <input id="limitInput" class="field" type="number" min="0" step="1" value="0" title="0 disables limit"/>
+          <select id="presetSelect" title="Apply a preset">
+            <option value="">Presets…</option>
+          </select>
+          <button id="applyPresetBtn">Apply</button>
+        </div>
+        <div class="rowInline">
+          <input id="newPresetInput" class="smallField" type="number" min="1" step="1" placeholder="e.g. 125"/>
+          <button id="addPresetBtn">Add</button>
+          <button class="danger" id="removePresetBtn">Remove Selected</button>
+        </div>
+        <div class="notice">Presets are saved in this browser (localStorage).</div>
+      </div>
+
+      <div class="statCard">
+        <div class="label">Export Option</div>
+        <div class="rowInline" style="margin-top:10px">
+          <label class="toggle"><input id="stripPortraits" type="checkbox" checked /> Strip portraits</label>
+        </div>
+        <div class="notice">Recommended if portraits are base64 in fighter JSON.</div>
+      </div>
+    </div>
+
+    <div id="status" class="notice"></div>
+    <div class="grid" id="list"></div>
+  </div>
+
+<script>
+(() => {
+  // Team entries: { id, sourceFileName, data }
+  let team = [];
+
+  const el = (id) => document.getElementById(id);
+  const listEl = el("list");
+  const statusEl = el("status");
+  const teamTotalEl = el("teamTotal");
+  const fighterCountEl = el("fighterCount");
+  const limitInput = el("limitInput");
+  const limitNotice = el("limitNotice");
+  const stripPortraitsEl = el("stripPortraits");
+
+  const fileInput = el("fileInput");
+  const teamInput = el("teamInput");
+  const exportBtn = el("exportBtn");
+  const clearBtn = el("clearBtn");
+
+  const presetSelect = el("presetSelect");
+  const applyPresetBtn = el("applyPresetBtn");
+  const newPresetInput = el("newPresetInput");
+  const addPresetBtn = el("addPresetBtn");
+  const removePresetBtn = el("removePresetBtn");
+
+  const PRESET_KEY = "dr_mortalis_teambuilder_presets_v1";
+
+  function uid() {
+    return "f_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  }
+  function safeNumber(n) {
+    return Number.isFinite(+n) ? +n : 0;
+  }
+  function fmtPts(n) {
+    return `${safeNumber(n)} pts`;
+  }
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // ---- Presets ----
+  function loadPresets() {
+    try {
+      const raw = localStorage.getItem(PRESET_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      const arr = Array.isArray(parsed) ? parsed : null;
+      const defaults = [375, 400];
+      const merged = (arr && arr.length ? arr : defaults)
+        .map(safeNumber)
+        .filter(v => v > 0)
+        .filter((v, i, a) => a.indexOf(v) === i)
+        .sort((a,b)=>a-b);
+      return merged;
+    } catch {
+      return [50, 75, 100, 125, 150, 200];
+    }
+  }
+  function savePresets(presets) {
+    localStorage.setItem(PRESET_KEY, JSON.stringify(presets));
+  }
+  function refreshPresetSelect(selectedValue="") {
+    const presets = loadPresets();
+    presetSelect.innerHTML = `<option value="">Presets…</option>` + presets.map(v =>
+      `<option value="${v}">${v} pts</option>`
+    ).join("");
+    if (selectedValue) presetSelect.value = String(selectedValue);
+  }
+
+  // ---- Fighter calculations & rendering ----
+  function calcFighterTotal(f) {
+    const p = f?.points;
+    if (!p || typeof p !== "object") return 0;
+    return Object.values(p).reduce((sum, v) => sum + safeNumber(v), 0);
+  }
+  function teamTotal() {
+    return team.reduce((sum, entry) => sum + calcFighterTotal(entry.data.fighter), 0);
+  }
+
+  function detectGameApp(obj) {
+    const app = (obj?.app || "").toLowerCase();
+    if (app.includes("mortalis")) return "Mortalis";
+    if (app.includes("dark realms")) return "Dark Realms";
+    return obj?.app ? String(obj.app) : "Unknown";
+  }
+
+  function validateFighterJson(obj) {
+    if (!obj || typeof obj !== "object") return "Not an object.";
+    if (!obj.fighter || typeof obj.fighter !== "object") return "Missing 'fighter' object.";
+    if (typeof obj.fighter.name !== "string") return "Missing fighter.name.";
+    if (!obj.fighter.stats || typeof obj.fighter.stats !== "object") return "Missing fighter.stats.";
+    if (!obj.fighter.points || typeof obj.fighter.points !== "object") return "Missing fighter.points breakdown.";
+    return null;
+  }
+
+  function weaponUpgradesText(w) {
+    const ups = w?.upgrades;
+    if (!ups || typeof ups !== "object") return "";
+    const on = Object.entries(ups).filter(([,v]) => !!v).map(([k]) => k);
+    if (!on.length) return "";
+    return "Upgrades: " + on.join(", ");
+  }
+
+  function render() {
+    const total = teamTotal();
+    const count = team.length;
+    fighterCountEl.textContent = count;
+    teamTotalEl.textContent = total;
+
+    const limit = safeNumber(limitInput.value);
+    if (limit > 0) {
+      const remaining = limit - total;
+      limitNotice.innerHTML = remaining < 0
+        ? `<span class="error">Over by ${Math.abs(remaining)} pts</span>`
+        : `<span class="ok">Remaining: ${remaining} pts</span>`;
+    } else {
+      limitNotice.textContent = "Limit disabled (0).";
+    }
+
+    if (count === 0) {
+      listEl.innerHTML = `
+        <div class="fighter" style="grid-column:1/-1">
+          <div class="fighterHead">
+            <div class="left">
+              <div class="name">No fighters loaded</div>
+              <div class="meta">Use “Load Fighter JSON(s)” above.</div>
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    const listItems = (arr, label, renderItem) => {
+      if (!Array.isArray(arr) || arr.length === 0) {
+        return `<div class="section"><h3>${label}</h3><div class="muted">None</div></div>`;
+      }
+      return `<div class="section"><h3>${label}</h3>${arr.map(renderItem).join("")}</div>`;
+    };
+
+    const weaponItem = (w) => {
+      const profile = w?.profile ?? w?.baseProfile ?? "";
+      const basePts = (w?.basePoints != null) ? `Base: ${safeNumber(w.basePoints)} pts` : "";
+      const upTxt = weaponUpgradesText(w);
+      const smallLines = [profile, basePts, upTxt].filter(Boolean).map(x => `<div class="small">${escapeHtml(x)}</div>`).join("");
+      return `
+        <div class="row">
+          <div class="l">
+            <b>${escapeHtml(w?.name ?? "Unnamed")}</b>
+            ${smallLines}
+          </div>
+          <div class="r">${fmtPts(w?.points ?? 0)}</div>
+        </div>
+      `;
+    };
+
+    const simpleItem = (it) => `
+      <div class="row">
+        <div class="l">
+          <b>${escapeHtml(it?.name ?? "Unnamed")}</b>
+          ${it?.effect ? `<div class="small">${it.effect}</div>` : ""}
+          ${typeof it?.cv === "number" ? `<div class="small muted">CV: ${escapeHtml(it.cv)}</div>` : ""}
+        </div>
+        <div class="r">${fmtPts(it?.points ?? 0)}</div>
+      </div>
+    `;
+
+    listEl.innerHTML = team.map((entry) => {
+      const f = entry.data.fighter;
+      const totalPts = calcFighterTotal(f);
+      const appName = detectGameApp(entry.data);
+
+      const role =
+        f.isMasterWarlock ? "Master Warlock" :
+        (f.isWarlock ? "Warlock" : "Fighter");
+
+      const stats = f.stats || {};
+      const statKVs = [
+        ["Move", stats.move],
+        ["DEF", stats.def],
+        ["AP", stats.ap],
+        ["HP", stats.hp],
+        ["ATK", stats.atk],
+        ["Fight", stats.fight],
+        ["Shoot", stats.shoot],
+      ].map(([k,v]) => `
+        <div class="kv"><div class="k">${k}</div><div class="v">${escapeHtml(v ?? "")}</div></div>
+      `).join("");
+
+      const pointsBreakdownRows = Object.entries(f.points || {}).map(([k,v]) => `
+        <div class="row">
+          <div class="l"><b>${escapeHtml(k)}</b></div>
+          <div class="r">${fmtPts(v)}</div>
+        </div>
+      `).join("");
+
+      return `
+        <div class="fighter" data-id="${entry.id}">
+          <div class="fighterHead">
+            <div class="left">
+              <div class="name">${escapeHtml(f.name)} <span class="muted" style="font-weight:700">• ${escapeHtml(role)} • ${escapeHtml(appName)}</span></div>
+              <div class="meta">Source: ${escapeHtml(entry.sourceFileName || "—")}</div>
+            </div>
+            <div class="right">
+              <div class="costTag">${fmtPts(totalPts)}</div>
+              <button class="accent" data-action="dup" data-id="${entry.id}">Duplicate</button>
+              <button class="danger" data-action="remove" data-id="${entry.id}">Remove</button>
+            </div>
+          </div>
+
+          <details>
+            <summary>Show details</summary>
+            <div class="body">
+              <div class="section">
+                <h3>Stats</h3>
+                <div class="kvs">${statKVs}</div>
+              </div>
+
+              ${listItems(f.ccWeapons, "Close Combat Weapons", weaponItem)}
+              ${listItems(f.rangedWeapons, "Ranged Weapons", weaponItem)}
+              ${listItems(f.abilities, "Abilities", simpleItem)}
+              ${listItems(f.leaderAbilities, "Leader Abilities", simpleItem)}
+              ${listItems(f.spells, "Spells", simpleItem)}
+              ${listItems(f.equipment, "Equipment", simpleItem)}
+
+              <div class="section">
+                <h3>Points Breakdown</h3>
+                ${pointsBreakdownRows}
+                <div class="row">
+                  <div class="l"><b>Total</b></div>
+                  <div class="r">${fmtPts(totalPts)}</div>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function setStatus(msg, isError=false) {
+    if (!msg) { statusEl.textContent = ""; return; }
+    statusEl.innerHTML = isError ? `<span class="error">${escapeHtml(msg)}</span>` : escapeHtml(msg);
+  }
+
+  async function readFileAsText(file) {
+    return await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = () => reject(r.error || new Error("Failed reading file"));
+      r.readAsText(file);
+    });
+  }
+
+  async function importFighterFiles(files) {
+    const arr = Array.from(files || []);
+    if (arr.length === 0) return;
+
+    let added = 0;
+    let skipped = 0;
+
+    for (const file of arr) {
+      try {
+        const txt = await readFileAsText(file);
+        const obj = JSON.parse(txt);
+        const err = validateFighterJson(obj);
+        if (err) { skipped++; continue; }
+        team.push({ id: uid(), sourceFileName: file.name, data: obj });
+        added++;
+      } catch {
+        skipped++;
+      }
+    }
+
+    if (added) setStatus(`Loaded ${added} fighter file(s). ${skipped ? `Skipped ${skipped}.` : ""}`);
+    else setStatus(`No valid fighter files found.`, true);
+
+    render();
+  }
+
+  function removeFighter(id) {
+    team = team.filter(x => x.id !== id);
+    render();
+  }
+
+  function duplicateFighter(id) {
+    const entry = team.find(x => x.id === id);
+    if (!entry) return;
+    const clone = JSON.parse(JSON.stringify(entry.data));
+    const name = clone?.fighter?.name || "Fighter";
+    clone.fighter.name = name + " (Copy)";
+    team.push({ id: uid(), sourceFileName: entry.sourceFileName, data: clone });
+    render();
+  }
+
+  function exportTeam() {
+    const stripPortraits = !!stripPortraitsEl.checked;
+    const exported = {
+      app: "Mortalis / Dark Realms Team Builder",
+      version: 1,
+      savedAt: new Date().toISOString(),
+      limit: safeNumber(limitInput.value),
+      presets: loadPresets(),
+      fighters: team.map(entry => {
+        const data = JSON.parse(JSON.stringify(entry.data));
+        if (stripPortraits && data?.fighter) data.fighter.portraitDataUrl = "";
+        return { sourceFileName: entry.sourceFileName || "", fighterFile: data };
+      })
+    };
+
+    const blob = new Blob([JSON.stringify(exported, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "team_roster.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setStatus("Exported team_roster.json");
+  }
+
+  async function importTeamFile(file) {
+    if (!file) return;
+    try {
+      const txt = await readFileAsText(file);
+      const obj = JSON.parse(txt);
+      if (!obj || typeof obj !== "object" || !Array.isArray(obj.fighters)) {
+        setStatus("Not a valid team file (missing fighters array).", true);
+        return;
+      }
+
+      // Restore presets if present (optional)
+      if (Array.isArray(obj.presets)) {
+        const cleaned = obj.presets.map(safeNumber).filter(v => v > 0)
+          .filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+        if (cleaned.length) { savePresets(cleaned); refreshPresetSelect(); }
+      }
+
+      // Restore limit if present (optional)
+      if (typeof obj.limit === "number") limitInput.value = String(Math.max(0, obj.limit));
+
+      const loaded = [];
+      for (const item of obj.fighters) {
+        const fighterFile = item?.fighterFile;
+        const err = validateFighterJson(fighterFile);
+        if (err) continue;
+        loaded.push({ id: uid(), sourceFileName: item?.sourceFileName || "", data: fighterFile });
+      }
+      team = loaded;
+      setStatus(`Imported team: ${team.length} fighter(s).`);
+      render();
+    } catch (e) {
+      setStatus(`Failed importing team file: ${e?.message || e}`, true);
+    }
+  }
+
+  // ---- Events ----
+  fileInput.addEventListener("change", async (e) => {
+    setStatus("");
+    await importFighterFiles(e.target.files);
+    fileInput.value = "";
+  });
+
+  teamInput.addEventListener("change", async (e) => {
+    setStatus("");
+    const file = e.target.files?.[0];
+    await importTeamFile(file);
+    teamInput.value = "";
+  });
+
+  exportBtn.addEventListener("click", () => {
+    if (team.length === 0) return setStatus("Nothing to export.", true);
+    exportTeam();
+  });
+
+  clearBtn.addEventListener("click", () => {
+    team = [];
+    setStatus("Cleared team.");
+    render();
+  });
+
+  listEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const action = btn.getAttribute("data-action");
+    const id = btn.getAttribute("data-id");
+    if (action === "remove") removeFighter(id);
+    if (action === "dup") duplicateFighter(id);
+  });
+
+  limitInput.addEventListener("input", render);
+
+  // Preset buttons
+  applyPresetBtn.addEventListener("click", () => {
+    const v = safeNumber(presetSelect.value);
+    if (v > 0) {
+      limitInput.value = String(v);
+      render();
+      setStatus(`Applied preset: ${v} pts`);
+    }
+  });
+
+  addPresetBtn.addEventListener("click", () => {
+    const v = safeNumber(newPresetInput.value);
+    if (v <= 0) return setStatus("Enter a preset value > 0.", true);
+    const presets = loadPresets();
+    if (!presets.includes(v)) presets.push(v);
+    const cleaned = presets.filter(x => x > 0).filter((x,i,a)=>a.indexOf(x)===i).sort((a,b)=>a-b);
+    savePresets(cleaned);
+    refreshPresetSelect(String(v));
+    newPresetInput.value = "";
+    setStatus(`Added preset: ${v} pts`);
+  });
+
+  removePresetBtn.addEventListener("click", () => {
+    const v = safeNumber(presetSelect.value);
+    if (v <= 0) return setStatus("Select a preset to remove.", true);
+    const presets = loadPresets().filter(x => x !== v);
+    savePresets(presets);
+    refreshPresetSelect("");
+    setStatus(`Removed preset: ${v} pts`);
+  });
+
+  // Init
+  refreshPresetSelect();
+  render();
+})();
+</script>
+</body>
+</html>
